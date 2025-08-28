@@ -1,0 +1,1776 @@
+{
+  "name": "Linkedin Job Search Automation",
+  "nodes": [
+    {
+      "parameters": {
+        "operation": "append",
+        "documentId": {
+          "__rl": true,
+          "value": "1Ucap7TpaekZIgpDPaFj64t8NaJotf_NnRgG_I5RK96o",
+          "mode": "list",
+          "cachedResultName": "openai-cache",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1Ucap7TpaekZIgpDPaFj64t8NaJotf_NnRgG_I5RK96o/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "cache",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1Ucap7TpaekZIgpDPaFj64t8NaJotf_NnRgG_I5RK96o/edit#gid=0"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "content": "={{ $json.message.content }}",
+            "document_id": "={{ $('Get Resume CV').item.json.documentId }}"
+          },
+          "matchingColumns": [
+            "document_id"
+          ],
+          "schema": [
+            {
+              "id": "hash",
+              "displayName": "hash",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "document_id",
+              "displayName": "document_id",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "content",
+              "displayName": "content",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        3248,
+        1472
+      ],
+      "id": "48fbfd8d-6024-44ad-8ad2-a5105d58ca19",
+      "name": "Cached My Resume",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "oOZwEZQtooCqeyVd",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "url": "https://rss.app/feeds/JPbbHs1ZABcGsTro.xml",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.rssFeedRead",
+      "typeVersion": 1.2,
+      "position": [
+        624,
+        1376
+      ],
+      "id": "78978ec8-6869-4308-9e21-d275b6922be5",
+      "name": "RSS Feed"
+    },
+    {
+      "parameters": {
+        "jsCode": "return items.filter(item => {\n  const title = item.json.title.toLowerCase();\n  return (\n    title.includes(\"engineer\") &&\n    title.includes(\"london\") &&\n    !title.includes(\"software\") &&\n    !title.includes(\"ref:\") &&\n    !title.includes(\"cabling\") &&\n    !title.includes(\"Full Stack Engineer\")\n  );\n});"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        848,
+        1376
+      ],
+      "id": "8d82e941-5d1d-4216-9319-95dc8b39156e",
+      "name": "Extract Job Postings"
+    },
+    {
+      "parameters": {
+        "documentId": {
+          "__rl": true,
+          "value": "1LJTnrK7HmK5OSf6u2EkPcMWfLAh5B3UqF2BYKwBdsBM",
+          "mode": "list",
+          "cachedResultName": "Linkedin",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1LJTnrK7HmK5OSf6u2EkPcMWfLAh5B3UqF2BYKwBdsBM/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "Sheet1",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1LJTnrK7HmK5OSf6u2EkPcMWfLAh5B3UqF2BYKwBdsBM/edit#gid=0"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        432,
+        1648
+      ],
+      "id": "35f071ba-8fe1-46ff-b86f-1b8447df2d47",
+      "name": "Check Job Ids",
+      "executeOnce": true,
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "oOZwEZQtooCqeyVd",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const existingJobIds = $items(\"Check Job Ids\").map(i => (i.json.jobId || \"\").trim());\n\nreturn $items(\"Extract Job Postings\").filter(item => {\n  const link = item.json.link || \"\";\n  const match = link.match(/\\d+$/);   // extract last number at end of URL\n  const jobId = match ? match[0] : null;\n\n  if (!jobId) return false; // skip if jobId not found\n  return !existingJobIds.includes(jobId);\n});"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        640,
+        1648
+      ],
+      "id": "eb8f036a-cd1c-43ae-bc62-65b329f83d37",
+      "name": "Deduplication"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "056eefad-121c-46ae-8e31-9cca56cdf180",
+              "leftValue": "={{ $json.jobId }}",
+              "rightValue": "",
+              "operator": {
+                "type": "string",
+                "operation": "notExists",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        848,
+        1648
+      ],
+      "id": "ddcdea0c-6cb5-424d-8951-f96743e8f049",
+      "name": "If"
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "n8n-nodes-base.splitInBatches",
+      "typeVersion": 3,
+      "position": [
+        1088,
+        1632
+      ],
+      "id": "2fd638ab-ffe2-4546-8c0d-d212ee9205b7",
+      "name": "Loop Over Items"
+    },
+    {
+      "parameters": {
+        "operation": "append",
+        "documentId": {
+          "__rl": true,
+          "value": "1LJTnrK7HmK5OSf6u2EkPcMWfLAh5B3UqF2BYKwBdsBM",
+          "mode": "list",
+          "cachedResultName": "Linkedin",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1LJTnrK7HmK5OSf6u2EkPcMWfLAh5B3UqF2BYKwBdsBM/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "Sheet1",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1hkPFsRu--3IQjtvSzLn70pSznxyhim6z-WdMQWozHQ0/edit#gid=0"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "Company Name": "={{ $('Parsing JD').item.json.message.content.company_name }}",
+            "Salary": "={{ $('Parsing JD').item.json.message.content.salary }}",
+            "Location": "={{ $('Parsing JD').item.json.message.content.location }}",
+            "yoe": "={{ $('Parsing JD').item.json.message.content.yoe }}",
+            "Job URL": "={{ $('Loop Over Items').item.json.link }}",
+            "Job Id": "={{ $('Parsing JD').item.json.message.content.job_id }}",
+            "Published Date": "={{ $('Parsing JD').item.json.message.content.posted_date }}",
+            "Position": "={{ $('Parsing JD').item.json.message.content.position }}",
+            "Job Description": "={{ $('Parsing JD').item.json.message.content.job_description }}",
+            "Requirements": "={{ $('Parsing JD').item.json.message.content.requirements }}",
+            "Skills & Tech": "={{ $('Parsing JD').item.json.message.content.skills_and_tech }}",
+            "Company Overview": "={{ $('Parsing JD').item.json.message.content.company_overview }}",
+            "Industry": "={{ $('Parsing JD').item.json.message.content.industry }}",
+            "Business Model": "={{ $('Parsing JD').item.json.message.content.business_model }}",
+            "Company Size": "={{ $('Parsing JD').item.json.message.content.company_size }}",
+            "Annual Revenue": "={{ $('Parsing JD').item.json.message.content.annual_revenue }}",
+            "Mission Statement": "={{ $('Parsing JD').item.json.message.content.mission_statement }}",
+            "Core Values": "={{ $('Parsing JD').item.json.message.content.core_values }}",
+            "JD Keywords": "={{ $json.message.content.jd_keywords }}"
+          },
+          "matchingColumns": [
+            "Job URL"
+          ],
+          "schema": [
+            {
+              "id": "Job Id",
+              "displayName": "Job Id",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Published Date",
+              "displayName": "Published Date",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Job URL",
+              "displayName": "Job URL",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Position",
+              "displayName": "Position",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Rating",
+              "displayName": "Rating",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "Company Name",
+              "displayName": "Company Name",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Job Description",
+              "displayName": "Job Description",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "JD Keywords",
+              "displayName": "JD Keywords",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Requirements",
+              "displayName": "Requirements",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Skills & Tech",
+              "displayName": "Skills & Tech",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Status",
+              "displayName": "Status",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "Cover Letter",
+              "displayName": "Cover Letter",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "Resume",
+              "displayName": "Resume",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "Location",
+              "displayName": "Location",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Salary",
+              "displayName": "Salary",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "yoe",
+              "displayName": "yoe",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Company Overview",
+              "displayName": "Company Overview",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Industry",
+              "displayName": "Industry",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Business Model",
+              "displayName": "Business Model",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Company Size",
+              "displayName": "Company Size",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Annual Revenue",
+              "displayName": "Annual Revenue",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Mission Statement",
+              "displayName": "Mission Statement",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Core Values",
+              "displayName": "Core Values",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        1584,
+        1488
+      ],
+      "id": "df2c9c11-e50e-40df-b63e-8a297d4a1df2",
+      "name": "Job Update Sheet",
+      "alwaysOutputData": true,
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "oOZwEZQtooCqeyVd",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "get",
+        "documentURL": "1Unkbp38nQmGq6jyp4wEQ-qW9Ck73CHxtWMsqiSSFpqM"
+      },
+      "type": "n8n-nodes-base.googleDocs",
+      "typeVersion": 2,
+      "position": [
+        1760,
+        1488
+      ],
+      "id": "3be5ae1c-50a8-4b1d-b51e-130badacde38",
+      "name": "Get Resume CV",
+      "credentials": {
+        "googleDocsOAuth2Api": {
+          "id": "xBzzIDUbzeiL9vRF",
+          "name": "Google Docs account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "value": "={{ $json.content }}"
+      },
+      "type": "n8n-nodes-base.crypto",
+      "typeVersion": 1,
+      "position": [
+        1952,
+        1488
+      ],
+      "id": "e29016ef-153b-4192-8074-fb142f4b09cb",
+      "name": "Generate Hash (Caching Retrieval)"
+    },
+    {
+      "parameters": {
+        "documentId": {
+          "__rl": true,
+          "value": "1Ucap7TpaekZIgpDPaFj64t8NaJotf_NnRgG_I5RK96o",
+          "mode": "list",
+          "cachedResultName": "openai-cache",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1Ucap7TpaekZIgpDPaFj64t8NaJotf_NnRgG_I5RK96o/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "cache",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1Ucap7TpaekZIgpDPaFj64t8NaJotf_NnRgG_I5RK96o/edit#gid=0"
+        },
+        "filtersUI": {
+          "values": [
+            {
+              "lookupColumn": "hash",
+              "lookupValue": "={{ $json.data }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        2160,
+        1488
+      ],
+      "id": "0bd7f45c-00a6-4780-878c-944b1c5f51e8",
+      "name": "Fetched Cache Content",
+      "alwaysOutputData": true,
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "oOZwEZQtooCqeyVd",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "9e67cca7-00bb-4e02-9fbe-ff461295e694",
+              "leftValue": "={{ $json.hash }}",
+              "rightValue": "",
+              "operator": {
+                "type": "string",
+                "operation": "notExists",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        2352,
+        1488
+      ],
+      "id": "e7f51cf2-815c-4400-a609-6309d0cfbd3a",
+      "name": "If Not Cached"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "8a4360fa-c75f-4769-ac5f-3f2cb661e7b5",
+              "name": "documentId",
+              "value": "={{ $('Get Resume CV').item.json.documentId }}",
+              "type": "string"
+            },
+            {
+              "id": "7d18186c-dff9-4525-9688-d312a896a683",
+              "name": "content",
+              "value": "={{ $('Get Resume CV').item.json.content }}",
+              "type": "string"
+            },
+            {
+              "id": "b75ee577-5f12-4e42-ad76-8ebdc805128e",
+              "name": "",
+              "value": "",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        2544,
+        1472
+      ],
+      "id": "8dcd58e3-3134-46ab-8cc0-b77b419f4057",
+      "name": "Get Content To Cache"
+    },
+    {
+      "parameters": {
+        "value": "={{ $json.content }}"
+      },
+      "type": "n8n-nodes-base.crypto",
+      "typeVersion": 1,
+      "position": [
+        2736,
+        1472
+      ],
+      "id": "e686d3cf-fa52-4c4f-801a-c00bc4be3e34",
+      "name": "Generate Hash (Caching)"
+    },
+    {
+      "parameters": {
+        "documentId": {
+          "__rl": true,
+          "value": "1Ucap7TpaekZIgpDPaFj64t8NaJotf_NnRgG_I5RK96o",
+          "mode": "list",
+          "cachedResultName": "openai-cache",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1Ucap7TpaekZIgpDPaFj64t8NaJotf_NnRgG_I5RK96o/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "cache",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1Ucap7TpaekZIgpDPaFj64t8NaJotf_NnRgG_I5RK96o/edit#gid=0"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        1760,
+        1760
+      ],
+      "id": "96358a77-b673-4764-ac60-87c23cb46b30",
+      "name": "Get Cached Resume",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "oOZwEZQtooCqeyVd",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "return items.map(item => {\n  return {\n    json: {\n      content: JSON.parse($input.first().json.content)\n    }\n  }\n})"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1968,
+        1760
+      ],
+      "id": "12a36398-f8e5-486b-8a8a-b4b6c03c6cfe",
+      "name": "Parse Resume (Cached)"
+    },
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 3.2,
+      "position": [
+        1744,
+        2000
+      ],
+      "id": "ce745b45-ed9e-4424-902e-7a2a421e194a",
+      "name": "Merge Job and Resume",
+      "alwaysOutputData": false,
+      "executeOnce": false
+    },
+    {
+      "parameters": {
+        "jsCode": "const[resumeData, jobData] = items.map(i => i.json);\n\nreturn [\n  {\n    json: {\n      job: jobData,\n      resume: resumeData\n    }\n  }\n];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1968,
+        2000
+      ],
+      "id": "94202ace-2647-4ce3-b52d-a227486d28e0",
+      "name": "Sanitise"
+    },
+    {
+      "parameters": {
+        "modelId": {
+          "__rl": true,
+          "value": "gpt-4o-mini",
+          "mode": "list",
+          "cachedResultName": "GPT-4O-MINI"
+        },
+        "messages": {
+          "values": [
+            {
+              "content": "=You're an intelligent bot perfect at tailoring resume \nfor a job. Please take the candidates resume (Experience section) and create a\ncustomized resume to the job details (title and job description).",
+              "role": "system"
+            },
+            {
+              "content": "=Here's the job listing details:\ntitle: {{ $('Sanitise').item.json.job.message.content.position }}\n\njob_description: \n{{ $('Sanitise').item.json.job.message.content.job_description }}\n{{ $('Sanitise').item.json.job.message.content.requirements }}\n{{ $('Sanitise').item.json.job.message.content.jd_keywords }}\n\nHere's the candidate skill set:\nSAMPLE RESUME:\nSWATHI RAAJENDIRAN\n+44 7766196828 | swathi.ukraajendiran@gmail.com | www.linkedin.com/in/swathi-raajendiran | East London\n\nSUMMARY\nData professional with 4+ years of global experience across data engineering, science, and machine learning. Skilled in designing and managing large-scale data systems, \nI bridge technical innovation with business impact. Passionate about leveraging emerging technologies to drive data-informed decisions and organizational success.\n\nSKILLS\n1) Automated and improved operations using Python, SQL, PySpark and libraries like Pandas, Numpy, Flask and FastAPI.\n2) Managed databases (Oracle, SQL Server, MySQL) and built ETL pipelines with Databricks.\n3) Deployed and maintained cloud solutions on AWS, Azure, and Snowflake for scalable data handling.\n4) Ensured data quality and governance through strong data modeling and controls.\n5) Used machine learning and deep learning techniques (CNN, RNN) to support predictive analytics and process improvements.\n6) Created Power BI dashboards to track KPIs and support decision-making.\n\nEXPERIENCE\nData Engineer Consultant | Infolytics Ltd | London, UK | Dec 2022 - Present\n-  Led end-to-end process management for medium-scale on-premises SQL records to Azure Data Lake and establishing a secure, scalable data foundation.\n-  Implemented incremental data loading and automated daily ETL workflows with Azure Data Factory and Databricks, streamlining process improvement and automation efforts that reduced manual data handling by 70% and decreased error rates by 60%.\n- Strengthened governance & controls by configuring Entra ID, Azure Key Vault achieving 100% compliance with internal and regulatory standards.\n- Developed interactive data visualization solutions with Power BI and Synapse Analytics, delivering real-time insights to stakeholders and improving KPI reporting turnaround by 60%.\n\nAI/ML Engineer | Pepul Tech Pvt Ltd | Chennai, India | Feb 2022 - Dec 2022\n  Orchestrated the conceptualization and execution of a Recommendation Engine System, culminating in heightened user engagement and satisfaction metrics.\n  Spearheaded and delivered comprehensive feasibility studies, employing diverse machine-learning techniques that upheld the integrity of proposed actions by 85%.\n  Mastered Amazon, Microsoft Azure, and Google Cloud platforms, strategically harnessing their capabilities to amplify project operational efficiency.\n  Engineered and deployed a streamlined process utilizing Fast API Web Frameworks, yielding a 40% efficiency boost and slashing deployment time by 60% through AWS Lambda.\n  Applied pre-trained models to regulate user-generated content, ensuring strict adherence to guidelines and policies.\n\nAssociate Data Engineer | Avasoft | Chennai, India | Feb 2021 - Jan 2022\n- Streamlined company data migration to Snowflake, enhancing database performance and resilience while simplifying access to vital information, resulting in improved efficiency.\n- Employed Data Migration Service (DMS) and Amazon S3 to proficiently retrieve and store data, establishing integrations with diverse sources for seamless information transfer and storage optimization.\n- Applied ETL technologies such as Databricks, Informatica, and CA Workload Automation for comprehensive data computation, focusing on achieving strategic outcomes.\n- Collaborated with solution architects to design functional solutions and module data flow, attaining a 95% success rate in migration and delivering optimized results.\n- Ensured on-time project delivery by adeptly managing internal and external dependencies, and meeting project milestones and timelines with a 98% success rate.\n\nData Scientist Intern | Bitwise Academy - (Internship)\nCoimbatore, India | Nov 2020 - Jan 2021\n\nData Scientist Intern | Duratech Solutions - (Internship)\nCoimbatore, India | Jul 2018 - Dec 2018\n\nEDUCATION\nM.Sc Data Science (First Class)\nCoimbatore Institute of Technology\nCoimbatore, India | Jun 2016 - Apr 2021\n"
+            },
+            {
+              "content": "Please return the output in the following way:\n- Under experience section each company should at-least have 5 points relevant to the sample resume and the job post details should consider jd_keywords.\n- In skill section, refer the sample resume and alter it with the skills from the job post details.\n-JSON data structured the following way:\n{\ntailored_resume: \"\"\n}",
+              "role": "assistant"
+            }
+          ]
+        },
+        "jsonOutput": true,
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.openAi",
+      "typeVersion": 1.8,
+      "position": [
+        2192,
+        2256
+      ],
+      "id": "c5654181-075c-4bba-ae2f-5e830fb738e2",
+      "name": "Tailor Resume",
+      "credentials": {
+        "openAiApi": {
+          "id": "IKO7sp40z5PFH3Ei",
+          "name": "OpenAi account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "modelId": {
+          "__rl": true,
+          "value": "gpt-4o-mini",
+          "mode": "list",
+          "cachedResultName": "GPT-4O-MINI"
+        },
+        "messages": {
+          "values": [
+            {
+              "content": "=You are a job application assistant. You will be given structured data including:\n1. A job posting with its role description, requirements, and company metadata.\n2. A parsed resume/CV of the applicant including relevant experience and skills.\nYour tasks are:\n---\n**1. Skill Match Evaluation**\n- Analyze the `skills_and_tech` field from the job posting.\n- Compare it to the candidate’s skills and experience.\n- Return a `skill_match` score between 1 and 5:\n  - 5 = Strong alignment with nearly all required skills \n  - 4 = Good alignment with most core skills  \n  - 3 = Partial match with several important skills  \n  - 2 = Weak match, few relevant skills  \n  - 1 = Poor match, lacks relevant skills  \n- Use your judgment and be honest. The score should reflect actual technical overlap and practical experience.\n---\n**2. Cover Letter Generation\n**Generate a tailored, professional 100 words cover letter that:\n- Highlights the candidate’s most relevant technical and professional experience.  \n- Aligns the candidate’s background with the job requirements, mission, and values.  \n- Incorporates the company’s industry and business model where appropriate.  \n- Emphasizes the value the candidate can bring based on achievements.  \n- Sounds human and personal, yet focused and concise.  \n- Uses a natural, confident tone. Avoid exaggeration, markdown, or fluff.  \n---\n**Input Data (structured JSON)**\n{\"job\": {\n\"job_id\": \"{{ $json.job.message.content.job_id }}\",\n\"company_name\": \"{{ $json.job.message.content.company_name }}\",\n\"position\": \"{{ $json.job.message.content.position }}\",\n\"salary\": \"{{ $json.job.message.content.salary }}\",\n\"location\": \"{{ $json.job.message.content.location }}\",\n\"posted_date\": \"{{ $json.job.message.content.posted_date }}\",\n\"skills_and_tech\": {{ JSON.stringify($json.job.message.content.skills_and_tech) }},\n\"job_description\": \"{{ $json.job.message.content.job_description }}\",\n\"yoe\": \"{{ $json.job.message.content.yoe }}\",\n\"company_info\": \"{{ $json.job.message.content.company_info }}\",\n\"job_url\": \"{{ $json.job.message.content.job_url }}\",\n\"industry\": \"{{ $json.job.message.content.industry }}\",\n\"business_model\": \"{{ $json.job.message.content.business_model }}\",\n\"company_size\": \"{{ $json.job.message.content.company_size }}\",\n\"annual_revenue\": \"{{ $json.job.message.content.annual_revenue }}\",\n\"mission_statement\": \"{{ $json.job.mission_statement || '' }}\",\n\"core_values\": {{ JSON.stringify($json.job.core_values || []) }}  },\n\"resume\": {\n\"text_summary\": \"{{ $json.resume.content.text_summary }}\",\n\"skills\": \"{{ $json.resume.content.skills }}\",\n\"yoe\": \"{{ $json.resume.content.yoe }}\",\n\"experience\": \"{{ $json.resume.content.experience }}\"}\n---\n**Response Format\n**Return exactly one valid JSON object with the following structure:\n{\"skill_match\": 1–5,\n\"cover_letter\": \"\" // A page in length cover letter for job application}\n**Instructions:\n- Remove all newlines, markdown, bullet points, or commentary.\n- Return only valid JSON — no code blocks, comments, or extra text before/after the object."
+            }
+          ]
+        },
+        "jsonOutput": true,
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.openAi",
+      "typeVersion": 1.8,
+      "position": [
+        2192,
+        2000
+      ],
+      "id": "f38506b2-58e0-4ba1-aece-e19c02b4611b",
+      "name": "Skill Match and Cover Letter",
+      "credentials": {
+        "openAiApi": {
+          "id": "IKO7sp40z5PFH3Ei",
+          "name": "OpenAi account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "modelId": {
+          "__rl": true,
+          "value": "gpt-4o-mini",
+          "mode": "list",
+          "cachedResultName": "GPT-4O-MINI"
+        },
+        "messages": {
+          "values": [
+            {
+              "content": "=You are a job application assistant.You will be given a job posting. Extract and return a single JSON object with the following structure. Use snake_case for all keys. All keys in the structure must be present in the final output, even if some values are not known or mentioned. \nINPUT:\nTitle: {{ $json.title }}\nLink: {{ $json.link }}\nPosted Date: {{ $json.isoDate }}\nDescription: {{ $json.contentSnippet }}\n\nExtract and return this structure:{\n\"job_id\": \"\",\nfrom job URL  \"company_name\": \"\",\nfrom title  \"position\": \"\",\nfrom title  \"salary\": \"\" if mentioned, else \"\"  \"\nlocation\": \"\",city + country or region  \n\"posted_date\": \"\",ISO format YYYY-MM-DD  \n\"skills_and_tech\": [],[\"React\", \"Node.js\", \"AWS\"] Do not miss any technical tools, services and Keywords mentioned in the Job Post\n\"job_description\": \"\", as such in the job post\n\"requirements\": \"\", as such from the job post what expected from a candidate\n\"jd_keywords\": [], kindly parse the Job Description and provide me with the list of top 15 keywords in the order of priority that should be in my CV to impress the recruiter and ensure that my CV passes the ATS keyword scan.\n\"yoe\": \"\",required or implied years of experience  \n\"company_info\": \"\",summary from job post  \n\"job_url\": \"\",public job post link  \n\"application_url\": \"\",same as job_url unless specified separately   \nCompany metadata — use your internal knowledge to simulate a lookup  \"company_overview\": \"\",max 2 sentences  \n\"industry\": \"\",e.g. Financial Services  \n\"business_model\": \"\",1 sentence on how revenue is generated  \n\"company_size\": \"\",e.g. \"200–500\", leave blank if unknown  \n\"annual_revenue\": \"\",e.g. \"£50M\", leave blank if unknown  \n\"mission_statement\": \"\",1 sentence, leave blank if not public  \n\"core_values\": [] up to 10 values, e.g. [\"Integrity\", \"Innovation\"]}\nInstructions:\n- Use your internal training data as of September 2023 to simulate lookup of company metadata.\n- Include every field exactly as listed, even if the value is an empty string or empty array.\n- Remove all newlines, markdown, bullet points, or commentary.\n- Return only valid JSON \n— no code blocks, comments, or extra text before/after the object.\n"
+            }
+          ]
+        },
+        "jsonOutput": true,
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.openAi",
+      "typeVersion": 1.8,
+      "position": [
+        1264,
+        1760
+      ],
+      "id": "936521ee-7c92-4d26-b4ba-2dcbd4b61d8a",
+      "name": "Parsing JD",
+      "credentials": {
+        "openAiApi": {
+          "id": "IKO7sp40z5PFH3Ei",
+          "name": "OpenAi account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "appendOrUpdate",
+        "documentId": {
+          "__rl": true,
+          "value": "1LJTnrK7HmK5OSf6u2EkPcMWfLAh5B3UqF2BYKwBdsBM",
+          "mode": "list",
+          "cachedResultName": "Linkedin",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1LJTnrK7HmK5OSf6u2EkPcMWfLAh5B3UqF2BYKwBdsBM/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "Sheet1",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1hkPFsRu--3IQjtvSzLn70pSznxyhim6z-WdMQWozHQ0/edit#gid=0"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "Job Id": "={{ $('Sanitise').item.json.job.message.content.job_id }}",
+            "Rating": "={{ $('Skill Match and Cover Letter').item.json.message.content.skill_match }}",
+            "Cover Letter": "={{ $('Skill Match and Cover Letter').item.json.message.content.cover_letter }}",
+            "Position": "={{ $('Sanitise').item.json.job.message.content.position }}",
+            "Job Description": "={{ $('Sanitise').item.json.job.message.content.job_description }}",
+            "Requirements": "={{ $('Sanitise').item.json.job.message.content.requirements }}",
+            "JD Keywords": "={{ $('Sanitise').item.json.job.message.content.jd_keywords }}",
+            "Resume": "={{ $json.message.content.tailored_resume }}"
+          },
+          "matchingColumns": [
+            "Job Id"
+          ],
+          "schema": [
+            {
+              "id": "Job Id",
+              "displayName": "Job Id",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Published Date",
+              "displayName": "Published Date",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "Job URL",
+              "displayName": "Job URL",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "Position",
+              "displayName": "Position",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Rating",
+              "displayName": "Rating",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Company Name",
+              "displayName": "Company Name",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "Job Description",
+              "displayName": "Job Description",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "JD Keywords",
+              "displayName": "JD Keywords",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Requirements",
+              "displayName": "Requirements",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Skills & Tech",
+              "displayName": "Skills & Tech",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "Status",
+              "displayName": "Status",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "Cover Letter",
+              "displayName": "Cover Letter",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Resume",
+              "displayName": "Resume",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Location",
+              "displayName": "Location",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "Salary",
+              "displayName": "Salary",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "yoe",
+              "displayName": "yoe",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "Company Overview",
+              "displayName": "Company Overview",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "Industry",
+              "displayName": "Industry",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "Business Model",
+              "displayName": "Business Model",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "Company Size",
+              "displayName": "Company Size",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "Annual Revenue",
+              "displayName": "Annual Revenue",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "Mission Statement",
+              "displayName": "Mission Statement",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "Core Values",
+              "displayName": "Core Values",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        2496,
+        2000
+      ],
+      "id": "156e667e-8579-493b-bdc8-0ee96d0de6f8",
+      "name": "Updated Cover Letter Sheet",
+      "alwaysOutputData": true,
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "oOZwEZQtooCqeyVd",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "appendOrUpdate",
+        "documentId": {
+          "__rl": true,
+          "value": "1LJTnrK7HmK5OSf6u2EkPcMWfLAh5B3UqF2BYKwBdsBM",
+          "mode": "list",
+          "cachedResultName": "Linkedin",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1LJTnrK7HmK5OSf6u2EkPcMWfLAh5B3UqF2BYKwBdsBM/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "Sheet1",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1hkPFsRu--3IQjtvSzLn70pSznxyhim6z-WdMQWozHQ0/edit#gid=0"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "Job Id": "={{ $('Sanitise').item.json.job.message.content.job_id }}",
+            "Resume": "={{ $json.message.content.tailored_resume }}"
+          },
+          "matchingColumns": [
+            "Job Id"
+          ],
+          "schema": [
+            {
+              "id": "Job Id",
+              "displayName": "Job Id",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Published Date",
+              "displayName": "Published Date",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "Job URL",
+              "displayName": "Job URL",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "Position",
+              "displayName": "Position",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "Rating",
+              "displayName": "Rating",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "Company Name",
+              "displayName": "Company Name",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "Job Description",
+              "displayName": "Job Description",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "JD Keywords",
+              "displayName": "JD Keywords",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "Requirements",
+              "displayName": "Requirements",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "Skills & Tech",
+              "displayName": "Skills & Tech",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "Status",
+              "displayName": "Status",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "Cover Letter",
+              "displayName": "Cover Letter",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "Resume",
+              "displayName": "Resume",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Location",
+              "displayName": "Location",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "Salary",
+              "displayName": "Salary",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "yoe",
+              "displayName": "yoe",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "Company Overview",
+              "displayName": "Company Overview",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "Industry",
+              "displayName": "Industry",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "Business Model",
+              "displayName": "Business Model",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "Company Size",
+              "displayName": "Company Size",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "Annual Revenue",
+              "displayName": "Annual Revenue",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "Mission Statement",
+              "displayName": "Mission Statement",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "Core Values",
+              "displayName": "Core Values",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        2528,
+        2256
+      ],
+      "id": "a6e320b7-e72a-456a-835b-27b55085c410",
+      "name": "Updated Resume Sheet",
+      "alwaysOutputData": true,
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "oOZwEZQtooCqeyVd",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "amount": 1
+      },
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1.1,
+      "position": [
+        2736,
+        2256
+      ],
+      "id": "ff904b97-2c35-4e74-ab06-064b82eb7c42",
+      "name": "Wait",
+      "webhookId": "1b91b199-da15-4f5b-9f7d-8686b45f4548"
+    },
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "cronExpression",
+              "expression": "0 9,12,15 * * *"
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        448,
+        1376
+      ],
+      "id": "e0615b8a-4599-490d-8cb3-c37b333fb02a",
+      "name": "Schedule Trigger"
+    },
+    {
+      "parameters": {
+        "modelId": {
+          "__rl": true,
+          "value": "gpt-4o-mini",
+          "mode": "list",
+          "cachedResultName": "GPT-4O-MINI"
+        },
+        "messages": {
+          "values": [
+            {
+              "content": "=You're a career assistant. This file is my CV in plain text format. Please read it and return the result strictly as a JSON object with the following keys:\n{\n\"experience\": {\n\"CompanyName1\": \"Full experience text exactly as it appears under this company\",\n\"CompanyName2\": \"...\"},\n\"text_summary\": \"One paragraph summary of who I am and what I’ve done\",\n\"skills\": [\"List of technologies, tools, services and programming languages I've worked with\"],\n\"yoe\": \"Estimated total years of experience\"}\nPlease:\n- Format all values as clean strings with no escape characters or `\\\\n\n- Ensure the JSON is properly structured (no markdown, no explanation)\n- Do not include any code blocks or triple backticks\n- Do not prefix or suffix the JSON with any text \n— just the raw object{{ $json.content }}\nOnly return the JSON object."
+            }
+          ]
+        },
+        "jsonOutput": true,
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.openAi",
+      "typeVersion": 1.8,
+      "position": [
+        2944,
+        1472
+      ],
+      "id": "cdd73f51-e54b-4102-a579-20d17acba786",
+      "name": "Structured Base Resume",
+      "credentials": {
+        "openAiApi": {
+          "id": "IKO7sp40z5PFH3Ei",
+          "name": "OpenAi account"
+        }
+      }
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Cached My Resume": {
+      "main": [
+        []
+      ]
+    },
+    "RSS Feed": {
+      "main": [
+        [
+          {
+            "node": "Extract Job Postings",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Extract Job Postings": {
+      "main": [
+        [
+          {
+            "node": "Check Job Ids",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Check Job Ids": {
+      "main": [
+        [
+          {
+            "node": "Deduplication",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Deduplication": {
+      "main": [
+        [
+          {
+            "node": "If",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If": {
+      "main": [
+        [
+          {
+            "node": "Loop Over Items",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Loop Over Items": {
+      "main": [
+        [],
+        [
+          {
+            "node": "Parsing JD",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Job Update Sheet": {
+      "main": [
+        [
+          {
+            "node": "Get Resume CV",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get Resume CV": {
+      "main": [
+        [
+          {
+            "node": "Generate Hash (Caching Retrieval)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Generate Hash (Caching Retrieval)": {
+      "main": [
+        [
+          {
+            "node": "Fetched Cache Content",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Fetched Cache Content": {
+      "main": [
+        [
+          {
+            "node": "If Not Cached",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If Not Cached": {
+      "main": [
+        [
+          {
+            "node": "Get Content To Cache",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Get Cached Resume",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get Content To Cache": {
+      "main": [
+        [
+          {
+            "node": "Generate Hash (Caching)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Generate Hash (Caching)": {
+      "main": [
+        [
+          {
+            "node": "Structured Base Resume",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get Cached Resume": {
+      "main": [
+        [
+          {
+            "node": "Parse Resume (Cached)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Parse Resume (Cached)": {
+      "main": [
+        [
+          {
+            "node": "Merge Job and Resume",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Merge Job and Resume": {
+      "main": [
+        [
+          {
+            "node": "Sanitise",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Sanitise": {
+      "main": [
+        [
+          {
+            "node": "Skill Match and Cover Letter",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Tailor Resume": {
+      "main": [
+        [
+          {
+            "node": "Updated Resume Sheet",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Skill Match and Cover Letter": {
+      "main": [
+        [
+          {
+            "node": "Updated Cover Letter Sheet",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Parsing JD": {
+      "main": [
+        [
+          {
+            "node": "Merge Job and Resume",
+            "type": "main",
+            "index": 1
+          },
+          {
+            "node": "Job Update Sheet",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Updated Cover Letter Sheet": {
+      "main": [
+        [
+          {
+            "node": "Tailor Resume",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Updated Resume Sheet": {
+      "main": [
+        [
+          {
+            "node": "Wait",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Wait": {
+      "main": [
+        [
+          {
+            "node": "Loop Over Items",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Schedule Trigger": {
+      "main": [
+        [
+          {
+            "node": "RSS Feed",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Structured Base Resume": {
+      "main": [
+        [
+          {
+            "node": "Cached My Resume",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "timezone": "Europe/London",
+    "saveExecutionProgress": true,
+    "callerPolicy": "workflowsFromSameOwner"
+  },
+  "versionId": "86fc2b64-1966-4cff-83cd-3f20b374081b",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "5fde8966a14491f7829be75d38dc24266bae36efe1dad251a17c2f5bf5cc6dbf"
+  },
+  "id": "MTY08iz481jzJdg2",
+  "tags": []
+}
